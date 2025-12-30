@@ -8,6 +8,9 @@ from telegram import (
     Update,
     KeyboardButton,
     ReplyKeyboardMarkup,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    WebAppInfo,
 )
 from telegram.ext import (
     ApplicationBuilder,
@@ -105,9 +108,7 @@ def get_main_menu():
             ["ℹ️ О проекте"],
         ],
         resize_keyboard=True,
-    )
-
-# -----------------------------------
+    )# -----------------------------------
 # /start
 # -----------------------------------
 
@@ -118,6 +119,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_main_menu(),
     )
     remember_message(user.id, msg.message_id)
+
+# -----------------------------------
+# /admin — доступ только для ADMIN_ID
+# -----------------------------------
+
+async def admin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("У вас нет доступа.")
+        return
+
+    kb = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "🔐 Открыть мини‑апп (админ)",
+                web_app=WebAppInfo(
+                    url="https://gospodeensobaka-afk.github.io/kazan-audioguide/index.html"
+                )
+            )
+        ]
+    ])
+
+    await update.message.reply_text(
+        "Админ‑панель:",
+        reply_markup=kb
+    )
 
 # -----------------------------------
 # Команда удаления отзыва /del <ID>
@@ -148,7 +176,9 @@ async def admin_delete_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"Удалено:\n⭐ {deleted['rating']}\n{deleted['text']}"
-    )# -----------------------------------
+    )
+
+# -----------------------------------
 # Обработчик текстовых сообщений
 # -----------------------------------
 
@@ -156,10 +186,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
-    bot = context.bot
-
-    # -----------------------------------
-    # 📱 Приложение (пока заглушка)
+    bot = context.bot    # -----------------------------------
+    # 📱 Приложение
     # -----------------------------------
     if text == "📱 Приложение":
         msg = await bot.send_message(
@@ -177,13 +205,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Зимняя Казань — свет, масштаб и атмосфера.",
             "Панорамные виды города.",
             "Архитектурные шедевры.",
-            "1Сказочный финал маршрута.",
+            "Сказочный финал маршрута.",
         ]
         files = ["images/view1.jpg", "images/view2.jpg", "images/view3.jpg", "images/view4.jpg"]
 
         for path, desc in zip(files, descriptions):
             try:
-                photo_msg = await bot.send_photo(chat_id=chat_id, photo=open(path, "rb"), caption=desc)
+                photo_msg = await bot.send_photo(
+                    chat_id=chat_id,
+                    photo=open(path, "rb"),
+                    caption=desc
+                )
                 remember_message(user_id, photo_msg.message_id)
             except:
                 msg = await bot.send_message(chat_id=chat_id, text=desc)
@@ -207,7 +239,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Если что‑то пойдёт не так — пишите мне: 8‑951‑061‑35‑64"
         )
 
-        msg = await bot.send_message(chat_id=chat_id, text=instruction, reply_markup=get_main_menu(), parse_mode="Markdown")
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text=instruction,
+            reply_markup=get_main_menu(),
+            parse_mode="Markdown"
+        )
         remember_message(user_id, msg.message_id)
 
     # -----------------------------------
@@ -217,7 +254,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reviews = load_reviews()
 
         if not reviews:
-            msg = await bot.send_message(chat_id=chat_id, text="Пока нет отзывов.", reply_markup=get_main_menu())
+            msg = await bot.send_message(
+                chat_id=chat_id,
+                text="Пока нет отзывов.",
+                reply_markup=get_main_menu()
+            )
             remember_message(user_id, msg.message_id)
             return
 
@@ -281,7 +322,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["review_mode"] = None
         context.user_data["review_rating"] = None
 
-        msg = await bot.send_message(chat_id=chat_id, text="Спасибо за отзыв! 🙌", reply_markup=get_main_menu())
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text="Спасибо за отзыв! 🙌",
+            reply_markup=get_main_menu()
+        )
         remember_message(user_id, msg.message_id)
 
     # -----------------------------------
@@ -318,9 +363,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     resize_keyboard=True,
                 ),
             )
-            remember_message(user_id, msg.message_id)
-
-    # -----------------------------------
+            remember_message(user_id, msg.message_id)    # -----------------------------------
     # Оплата
     # -----------------------------------
     elif text == "✅ Оплатить 10 ₽":
@@ -337,7 +380,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             remember_message(user_id, msg.message_id)
         except:
-            msg = await bot.send_message(chat_id=chat_id, text="Ошибка при создании платежа.", reply_markup=get_main_menu())
+            msg = await bot.send_message(
+                chat_id=chat_id,
+                text="Ошибка при создании платежа.",
+                reply_markup=get_main_menu()
+            )
             remember_message(user_id, msg.message_id)
 
     # -----------------------------------
@@ -355,21 +402,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Спасибо, что поддерживаете локальные проекты ❤️"
         )
 
-        msg = await bot.send_message(chat_id=chat_id, text=about, parse_mode="Markdown", reply_markup=get_main_menu())
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text=about,
+            parse_mode="Markdown",
+            reply_markup=get_main_menu()
+        )
         remember_message(user_id, msg.message_id)
 
     # -----------------------------------
     # Назад
     # -----------------------------------
     elif text == "🔙 В главное меню":
-        msg = await bot.send_message(chat_id=chat_id, text="Главное меню:", reply_markup=get_main_menu())
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text="Главное меню:",
+            reply_markup=get_main_menu()
+        )
         remember_message(user_id, msg.message_id)
 
     # -----------------------------------
     # Неизвестная команда
     # -----------------------------------
     else:
-        msg = await bot.send_message(chat_id=chat_id, text="Неизвестная команда.", reply_markup=get_main_menu())
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text="Неизвестная команда.",
+            reply_markup=get_main_menu()
+        )
         remember_message(user_id, msg.message_id)
 
 # -----------------------------------
@@ -380,6 +440,7 @@ def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("admin", admin_cmd))   # ← новая команда
     app.add_handler(CommandHandler("del", admin_delete_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
@@ -387,5 +448,4 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
-
     main()
