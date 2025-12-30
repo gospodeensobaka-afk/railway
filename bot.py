@@ -177,7 +177,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Зимняя Казань — свет, масштаб и атмосфера.",
             "Панорамные виды города.",
             "Архитектурные шедевры.",
-            "Сказочный финал маршрута.",
+            "1Сказочный финал маршрута.",
         ]
         files = ["images/view1.jpg", "images/view2.jpg", "images/view3.jpg", "images/view4.jpg"]
 
@@ -387,4 +387,5 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
+
     main()
